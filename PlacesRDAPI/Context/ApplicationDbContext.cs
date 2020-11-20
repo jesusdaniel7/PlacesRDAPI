@@ -15,5 +15,6 @@ namespace PlacesRDAPI.Context
         }
         public DbSet<Province> Provinces { get; set; }
         public DbSet<Place> Places { get; set; }
+        public DbSet<PlacePhotos> PlacesPhotos { get; set; } 
     }
 }

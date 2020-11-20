@@ -1,4 +1,5 @@
-﻿using PlacesRDAPI.Models;
+﻿using Microsoft.AspNetCore.Http;
+using PlacesRDAPI.Validations;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -7,18 +8,14 @@ using System.Threading.Tasks;
 
 namespace PlacesRDAPI.DTOs
 {
-    public class PlaceDTO
+    public class PlacePatchDTO
     {
-        public int PlaceID { get; set; }
         [Required]
         [StringLength(100)]
         public string Name { get; set; }
         public int ProvinceID { get; set; }
-        public Province Province { get; set; }
+        public ProvinceDTO provinceDTO { get; set; }
         public string Lat { get; set; }
         public string Long { get; set; }
-        public string Photo { get; set; }
-        public List<PlacePhotos> Photos { get; set; }
-
     }
 }

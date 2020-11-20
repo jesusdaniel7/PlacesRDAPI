@@ -50,7 +50,7 @@ namespace PlacesRDAPI.Services
             {
                 PublicAccess = BlobContainerPublicAccessType.Blob
             });
-            var fileName = $"{Guid.NewGuid()}{extension}";
+            var fileName = $"{Guid.NewGuid()}{extension}" ;
             var blob = containerReference.GetBlockBlobReference(fileName);
             await blob.UploadFromByteArrayAsync(content, 0, content.Length);
             blob.Properties.ContentType = contentType;
