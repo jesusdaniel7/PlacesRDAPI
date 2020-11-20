@@ -15,7 +15,8 @@ namespace PlacesRDAPI.Helpers
             CreateMap<Place, PlaceDTO>().ReverseMap();
 
             CreateMap<Province, ProvinceDTO>().ReverseMap();
-            CreateMap<PlaceCreation, Place>();
+            CreateMap<PlaceCreation, Place>()
+                .ForMember(x => x.Photo, options => options.Ignore());
             CreateMap<ProvinceCreation, Province>();
         }
     }

@@ -13,6 +13,7 @@ namespace PlacesRDAPI.DTOs
         [Required]
         [StringLength(100)]
         public string Name { get; set; }
+        public string Photo { get; set; }
         public int ProvinceID { get; set; }
         public Province Province { get; set; }
         public string Lat { get; set; }

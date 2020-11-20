@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -9,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using PlacesRDAPI.Context;
 using PlacesRDAPI.DTOs;
 using PlacesRDAPI.Models;
+using PlacesRDAPI.Services;
 
 namespace PlacesRDAPI.Controllers
 {
@@ -18,11 +20,14 @@ namespace PlacesRDAPI.Controllers
     {
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
+        private readonly IFileStorage fileStorage;
+        private readonly string container = "places";
 
-        public PlacesController(ApplicationDbContext context, IMapper mapper)
+        public PlacesController(ApplicationDbContext context, IMapper mapper, IFileStorage fileStorage)
         {
             this.context = context;
             this.mapper = mapper;
+            this.fileStorage = fileStorage;
         }
 
         [HttpGet]
@@ -48,10 +53,21 @@ namespace PlacesRDAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post([FromBody] PlaceCreation placeCreation)
+        public async Task<ActionResult> Post([FromForm] PlaceCreation placeCreation)
         {
-
             var place = mapper.Map<Place>(placeCreation);
+            if (placeCreation.Photo != null)
+            {
+                using (var memoryStrean = new MemoryStream())
+                {
+                    await placeCreation.Photo.CopyToAsync(memoryStrean);
+                    var content = memoryStrean.ToArray();
+                    var extension = Path.GetExtension(placeCreation.Photo.FileName);
+
+                    place.Photo = await fileStorage.SaveFile(content, extension, container, placeCreation.Photo.ContentType);
+                }
+            }
+
             await context.Places.AddAsync(place);
             await context.SaveChangesAsync();
             var placeDTO = mapper.Map<PlaceDTO>(place);
@@ -60,18 +76,33 @@ namespace PlacesRDAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put([FromBody] PlaceCreation placeCreation, int id)
+        public async Task<ActionResult> Put([FromForm] PlaceCreation placeCreation, int id)
         {
-            var place = mapper.Map<Place>(placeCreation);
-            place.PlaceID = id;
+            //var place = mapper.Map<Place>(placeCreation);
 
-            if (place == null)
+
+            //place.PlaceID = id;
+
+            //if (place == null)
+            //{
+            //    return NotFound();
+            //}
+            var placeDB = await context.Places.FirstOrDefaultAsync(x => x.PlaceID == id);
+            if(placeDB == null) { return NotFound(); }
+
+            placeDB = mapper.Map(placeCreation, placeDB);
+            if (placeCreation.Photo != null)
             {
-                return NotFound();
-            }
+                using (var memoryStrean = new MemoryStream())
+                {
+                    await placeCreation.Photo.CopyToAsync(memoryStrean);
+                    var content = memoryStrean.ToArray();
+                    var extension = Path.GetExtension(placeCreation.Photo.FileName);
 
-            context.Entry(place).State = EntityState.Modified;
-            await context.SaveChangesAsync();
+                    placeDB.Photo = await fileStorage.EditFile(content, extension, container, placeDB.Photo, placeCreation.Photo.ContentType);
+                }
+            }
+          await context.SaveChangesAsync();
 
             return NoContent();
         }
@@ -87,7 +118,7 @@ namespace PlacesRDAPI.Controllers
             }
 
             context.Places.Remove(new Place(){PlaceID = id });
-            await context.SaveChangesAsync();
+           // await context.SaveChangesAsync();
 
             return NoContent();
         }
